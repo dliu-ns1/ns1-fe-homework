@@ -62,8 +62,8 @@ window.initGame = function () {
   };
 
   /**
-   * Checks if x, y, and o against of list lost robots, then
-   * return true or false if x, y, and o matches any of the lost robots' info.
+   * Checks if x, y, and o against a list of lost robots, then eturn true if x, y,
+   * and o matches any of the lost robots' info.
    *
    * @param {obj} Object containing x, y, o to check against the list of lost robots
    * @param {arr} lostRobos, a list of lost robots containing x, y, o info
@@ -92,10 +92,15 @@ window.initGame = function () {
    *
    * @param {obj}   Object containing "x"-"y" (int) coordinates and
    *                "o" (str) cardinal directions
+   * @param {arr}   lostRobos, a list of lost robots containing x, y, o information
+   * @param {arr}   bounds, an array containing X-Y bounds of the grid
    * @returns {obj} Object containing updated "x"-"y" (int) coordinates
    */
-  const updatePositions = ({ x, y, o }, lostRobos) => {
-    if (isLostRoboScentPresent({ x, y, o }, lostRobos)) {
+  const updatePositions = ({ x, y, o }, lostRobos, bounds) => {
+    if (
+      isOnGridEdge({ bounds, x, y }) &&
+      isLostRoboScentPresent({ x, y, o }, lostRobos)
+    ) {
       return { x, y };
     }
 
@@ -149,7 +154,7 @@ window.initGame = function () {
   }
 
   /**
-   * Determine if the next potential x-y coordinates are valid
+   * Determine if the next potential x-y coordinates are within the grid space
    *
    * @param {obj} Object containing "bounds" (arr) of the grid and
    *              the next potential "x" & "y" coordinates
@@ -160,12 +165,23 @@ window.initGame = function () {
   };
 
   /**
+   * Determine if the next potential x-y coordinates are on the edge of the grid
+   *
+   * @param {obj} Object containing "bounds" (arr) of the grid and
+   *              the next potential "x" & "y" coordinates
+   * @returns {bool}
+   */
+  const isOnGridEdge = ({ bounds, x, y }) => {
+    return x === 0 || y === 0 || x === bounds[0] || y === bounds[1];
+  };
+
+  /**
    * Execute a single command from the "robo" command string and update the X-Y
    * coordinates or the orientation.
    *
-   * Depending on command, bounds, and the scent of lost robots, commands will be
-   * ignored and X-Y coordinates remains the same. If the command navigates the robo
-   * off the grid, it will return undefined and populate the last position &
+   * Depending on command, bounds, and the scent of lost robots, commands can be
+   * ignored and X-Y coordinates will remains the same. If the command navigates the
+   * robo off the grid, it will return undefined and populate the last position &
    * orientation to "lostRobos" array.
    *
    * @param {obj} robo  Object containing X-Y coordinates (int),
@@ -179,7 +195,7 @@ window.initGame = function () {
 
     switch (firstCmd) {
       case 'f': {
-        const { x, y } = updatePositions(robo, lostRobos);
+        const { x, y } = updatePositions(robo, lostRobos, bounds);
 
         if (isWithinGrid({ bounds, x, y })) {
           robo = { ...robo, x, y };
@@ -199,6 +215,7 @@ window.initGame = function () {
         break;
       }
     }
+
     return robo ? { ...robo, command: robo.command.substring(1) } : undefined;
   }
 
@@ -243,15 +260,15 @@ window.initGame = function () {
    * within robo
    *
    * @param {obj} robo object containing x, y, o information
-   * @param {dom-node} ulDom <ul> DOM node object
+   * @param {dom-node} ulEl <ul> DOM node object
    * @param {fn} textTemplateFn string interpolation function that takes in {x,y,o}
    */
-  const populateRoboListDom = (robo, ulDom, textTemplateFn) => {
+  const populateRoboListDom = (robo, ulEl, textTemplateFn) => {
     const liEl = document.createElement('li');
     const textContentNode = document.createTextNode(textTemplateFn(robo));
 
     liEl.appendChild(textContentNode);
-    ulDom.appendChild(liEl);
+    ulEl.appendChild(liEl);
 
     return;
   };
